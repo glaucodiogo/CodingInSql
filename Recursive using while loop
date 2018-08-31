@@ -1,0 +1,21 @@
+SET NOCOUNT ON;
+DECLARE
+@Iteration INT = 0, @MaxIterations INT = 1000, @Partitioner INT = 1, @ParentKey INT = 0, @ChildKey INT = 0;
+
+CREATE TABLE #GeneratedData
+(
+	[ParentKey] INT, [ChildKey] INT
+);
+WHILE @Iteration < @MaxIterations
+	BEGIN
+		INSERT INTO #GeneratedData ([ParentKey], [ChildKey])
+			SELECT CASE WHEN @Iteration % @Partitioner = 0 THEN @Iteration ELSE @ParentKey END AS [ParentKey]
+				  ,CASE WHEN @Iteration % @Partitioner = 0 THEN @Partitioner - 1 ELSE @Iteration % @Partitioner	END AS [ChildKey];
+
+			SELECT @Iteration = @Iteration + 1 , @Partitioner =CASE WHEN (@Iteration % @Partitioner) = 0 THEN ((@Partitioner + 1) % 30) + 1 ELSE @Partitioner END
+			, @ParentKey = CASE WHEN (@Iteration % @Partitioner) = 0 THEN @Iteration + 1 ELSE @ParentKey END , @ChildKey = (@Iteration % @Partitioner);
+
+	END;
+
+select * from #GeneratedData
+DROP TABLE #GeneratedData;
